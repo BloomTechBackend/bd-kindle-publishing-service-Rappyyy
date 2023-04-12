@@ -29,7 +29,7 @@ public class GetBookActivity {
     /**
      * Instantiates a new GetBookActivity object.
      *
-     * @param catalogDao CatalogDao to access the Catalog table.
+     * @param catalogDao                  CatalogDao to access the Catalog table.
      * @param recommendationServiceClient Returns recommendations based on genre.
      */
     @Inject
@@ -48,10 +48,10 @@ public class GetBookActivity {
     public GetBookResponse execute(final GetBookRequest request) {
         CatalogItemVersion catalogItem = catalogDao.getBookFromCatalog(request.getBookId());
         List<BookRecommendation> recommendations = recommendationServiceClient.getBookRecommendations(
-            BookGenre.valueOf(catalogItem.getGenre().name()));
+                BookGenre.valueOf(catalogItem.getGenre().name()));
         return GetBookResponse.builder()
-            .withBook(CatalogItemConverter.toBook(catalogItem))
-            .withRecommendations(RecommendationsCoralConverter.toCoral(recommendations))
-            .build();
+                .withBook(CatalogItemConverter.toBook(catalogItem))
+                .withRecommendations(RecommendationsCoralConverter.toCoral(recommendations))
+                .build();
     }
 }
