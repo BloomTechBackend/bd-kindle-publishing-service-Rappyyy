@@ -9,9 +9,6 @@ import com.amazon.ata.kindlepublishingservice.converters.RecommendationsCoralCon
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.recommendationsservice.types.BookRecommendation;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
-
 import java.util.List;
 import javax.inject.Inject;
 
@@ -44,7 +41,7 @@ public class GetBookActivity {
      * @param request Request object containing the book ID associated with the book to get from the Catalog.
      * @return GetBookResponse Response object containing the requested book.
      */
-
+    
     public GetBookResponse execute(final GetBookRequest request) {
         CatalogItemVersion catalogItem = catalogDao.getBookFromCatalog(request.getBookId());
         List<BookRecommendation> recommendations = recommendationServiceClient.getBookRecommendations(

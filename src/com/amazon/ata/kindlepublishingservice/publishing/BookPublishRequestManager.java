@@ -20,7 +20,6 @@ public class BookPublishRequestManager {
 
     @Inject
     public BookPublishRequestManager( CatalogDao catalogDao) {
-
         this.catalogDao = catalogDao;
     }
 

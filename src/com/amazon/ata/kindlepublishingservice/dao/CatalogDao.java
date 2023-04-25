@@ -32,6 +32,7 @@ public class CatalogDao {
      * @param bookId Id associated with the book.
      * @return The corresponding CatalogItem from the catalog table.
      */
+
     public CatalogItemVersion getBookFromCatalog(BookPublishRequest bookId) {
         CatalogItemVersion book = getLatestVersionOfBook(bookId);
 
@@ -39,51 +40,35 @@ public class CatalogDao {
             throw new BookNotFoundException(String.format("No book found for id: %s", bookId));
         }
 
-
         return book;
     }
 
     public CatalogItemVersion getBookFromCatalog(String bookId) {
+
         CatalogItemVersion book = getLatestVersionOfBook(bookId);
 
         if (book == null) {
-            throw new BookNotFoundException(String.format("No book found for id: %s", bookId));
+            throw new BookNotFoundException("No book found for id: " + bookId);
         }
-
 
         return book;
     }
-    public void removeBookFromCatalog(BookPublishRequest bookId) {
-        CatalogItemVersion book = getLatestVersionOfBook(bookId);
 
-        if (book == null || book.isInactive()) {
-            throw new BookNotFoundException(String.format("No book found for id: %s", bookId));
-        }
-
-        book.setInactive(true);
-        dynamoDbMapper.save(book);
-    }
 
     public void removeBookFromCatalog(String bookId) {
+
         CatalogItemVersion book = getLatestVersionOfBook(bookId);
 
         if (book == null) {
-            throw new BookNotFoundException(String.format("No book found for id: %s", bookId));
+
+            throw new BookNotFoundException("No book found for id: " + bookId);
         }
 
         book.setInactive(true);
         dynamoDbMapper.save(book);
     }
 
-    public void validateBookExists(BookPublishRequest bookId) {
-        CatalogItemVersion book = getLatestVersionOfBook(bookId);
 
-        if (book == null) {
-            throw new BookNotFoundException(String.format("No book found for id: %s", bookId));
-        }
-    }
-
-    // Returns null if no version exists for the provided bookId
     private CatalogItemVersion getLatestVersionOfBook(BookPublishRequest bookPublishRequest) {
 
         if (bookPublishRequest == null) {
@@ -91,6 +76,7 @@ public class CatalogDao {
         }
 
         CatalogItemVersion book = new CatalogItemVersion();
+
         book.setBookId(bookPublishRequest.getBookId());
         book.setTitle(bookPublishRequest.getTitle());
         book.setAuthor(bookPublishRequest.getAuthor());
@@ -99,7 +85,6 @@ public class CatalogDao {
 
         DynamoDBQueryExpression<CatalogItemVersion> queryExpression = new DynamoDBQueryExpression()
             .withHashKeyValues(book)
-            .withScanIndexForward(false)
             .withLimit(1);
 
         List<CatalogItemVersion> results = dynamoDbMapper.query(CatalogItemVersion.class, queryExpression);
@@ -123,7 +108,6 @@ public class CatalogDao {
 
         DynamoDBQueryExpression<CatalogItemVersion> queryExpression = new DynamoDBQueryExpression()
                 .withHashKeyValues(book)
-                .withScanIndexForward(false)
                 .withLimit(1);
 
         List<CatalogItemVersion> results = dynamoDbMapper.query(CatalogItemVersion.class, queryExpression);
