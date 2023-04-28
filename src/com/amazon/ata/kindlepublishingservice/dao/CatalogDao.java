@@ -5,6 +5,7 @@ import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
 
 
 import com.amazon.ata.kindlepublishingservice.publishing.BookPublishRequest;
+import com.amazon.ata.kindlepublishingservice.publishing.KindleFormattedBook;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 
@@ -16,6 +17,7 @@ public class CatalogDao {
 
     private final DynamoDBMapper dynamoDbMapper;
 
+
     /**
      * Instantiates a new CatalogDao object.
      *
@@ -26,6 +28,15 @@ public class CatalogDao {
         this.dynamoDbMapper = dynamoDbMapper;
     }
 
+    public CatalogItemVersion createOrUpdateBook(KindleFormattedBook kindleFormattedBook) {
+
+        if(getBookFromCatalog(kindleFormattedBook.getBookId()) == null) {
+                   throw new BookNotFoundException("Book id not found");
+
+        }
+
+        return null;
+    }
     /**
      * Returns the latest version of the book from the catalog corresponding to the specified book id.
      * Throws a BookNotFoundException if the latest version is not active or no version is found.
