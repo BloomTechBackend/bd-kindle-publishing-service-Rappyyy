@@ -2,57 +2,39 @@ package com.amazon.ata.kindlepublishingservice.publishing;
 
 import com.amazon.ata.kindlepublishingservice.dao.CatalogDao;
 import com.amazon.ata.kindlepublishingservice.dao.PublishingStatusDao;
+import com.amazon.ata.kindlepublishingservice.dynamodb.models.CatalogItemVersion;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.exceptions.BookNotFoundException;
+import com.amazon.ata.kindlepublishingservice.models.PublishingStatus;
 
 import javax.inject.Inject;
+import javax.xml.catalog.Catalog;
 
-public class BookPublishTask implements Runnable{
-
-    private CatalogDao catalogDao;
-    private PublishingStatusDao publishingStatusDao;
-    private BookPublishRequestManager bookPublishRequestManager;
-
-
+public class BookPublishTask implements Runnable {
+    BookPublishRequestManager manager;
+    PublishingStatusDao publishingStatusDao;
+    CatalogDao catalogDao;
 
     @Inject
-    public void BookPublishTask(CatalogDao catalogDao,PublishingStatusDao publishingStatusDao, BookPublishRequestManager
-            bookPublishRequestManager) {
-
-        this.catalogDao = catalogDao;
+    public BookPublishTask(BookPublishRequestManager manager, PublishingStatusDao publishingStatusDao, CatalogDao catalogDao) {
+        this.manager = manager;
         this.publishingStatusDao = publishingStatusDao;
-        bookPublishRequestManager = bookPublishRequestManager;
-
+        this.catalogDao = catalogDao;
     }
-
 
     @Override
     public void run() {
+        BookPublishRequest request = manager.getBookPublishRequestToProcess();
+        if (request == null) return;
 
-        BookPublishRequest bookPublishRequest = bookPublishRequestManager.getBookPublishRequestToProcess();
+        publishingStatusDao.setPublishingStatus(request.getPublishingRecordId(), PublishingRecordStatus.IN_PROGRESS, request.getBookId());
 
-        if(bookPublishRequest == null) {
-            return;
+        try {
+            CatalogItemVersion item = catalogDao.createOrUpdateBook(KindleFormatConverter.format(request));
+            publishingStatusDao.setPublishingStatus(request.getPublishingRecordId(), PublishingRecordStatus.SUCCESSFUL, item.getBookId());
+        } catch (BookNotFoundException e) {
+            publishingStatusDao.setPublishingStatus(request.getPublishingRecordId(), PublishingRecordStatus.FAILED, request.getBookId());
         }
-
-        if (bookPublishRequest != null) {
-
-         publishingStatusDao.setPublishingStatus(bookPublishRequest.getPublishingRecordId(),
-                PublishingRecordStatus.IN_PROGRESS, bookPublishRequest.getBookId());
-
-            KindleFormattedBook kindleFormattedBook = KindleFormatConverter.format(bookPublishRequest);
-
-
-            try {
-                catalogDao.createOrUpdateBook(kindleFormattedBook);
-
-            } catch (BookNotFoundException e) {
-                publishingStatusDao.setPublishingStatus(bookPublishRequest.getPublishingRecordId(),
-                        PublishingRecordStatus.FAILED, bookPublishRequest.getBookId());
-            }
-        }
-
-
-
     }
 }
+

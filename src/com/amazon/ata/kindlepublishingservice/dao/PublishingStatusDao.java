@@ -3,17 +3,15 @@ package com.amazon.ata.kindlepublishingservice.dao;
 import com.amazon.ata.kindlepublishingservice.dynamodb.models.PublishingStatusItem;
 import com.amazon.ata.kindlepublishingservice.enums.PublishingRecordStatus;
 import com.amazon.ata.kindlepublishingservice.exceptions.PublishingStatusNotFoundException;
-import com.amazon.ata.kindlepublishingservice.models.PublishingStatusRecord;
 import com.amazon.ata.kindlepublishingservice.utils.KindlePublishingUtils;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
-import javax.management.Query;
 
 /**
  * Accesses the Publishing Status table.
@@ -31,28 +29,6 @@ public class PublishingStatusDao {
     @Inject
     public PublishingStatusDao(DynamoDBMapper dynamoDbMapper) {
         this.dynamoDbMapper = dynamoDbMapper;
-    }
-    /**
-     * Retrieves the publishing status item for the given publishing record ID.
-     *
-     * @param publishingRecordId The ID of the publishing record to retrieve.
-     * @return The PublishingStatusItem corresponding to the given publishing record ID.
-     * @throws PublishingStatusNotFoundException If no item is found for the given ID.
-     */
-    public List<PublishingStatusItem> getPublishingStatusItems(String publishingRecordId) {
-        PublishingStatusItem item = new PublishingStatusItem();
-        item.setPublishingRecordId(publishingRecordId);
-
-        DynamoDBQueryExpression<PublishingStatusItem> queryExpression =
-                new DynamoDBQueryExpression<PublishingStatusItem>().withHashKeyValues(item);
-
-        List<PublishingStatusItem> publishingStatusItemList = new ArrayList<>(dynamoDbMapper.query(
-                PublishingStatusItem.class, queryExpression));
-
-        if (publishingStatusItemList.isEmpty()) {
-            throw new PublishingStatusNotFoundException("PublishingStatusItem not found.");
-        }
-        return publishingStatusItemList;
     }
 
     /**
@@ -88,10 +64,10 @@ public class PublishingStatusDao {
         String statusMessage = KindlePublishingUtils.generatePublishingStatusMessage(publishingRecordStatus);
         if (StringUtils.isNotBlank(message)) {
             statusMessage = new StringBuffer()
-                .append(statusMessage)
-                .append(ADDITIONAL_NOTES_PREFIX)
-                .append(message)
-                .toString();
+                    .append(statusMessage)
+                    .append(ADDITIONAL_NOTES_PREFIX)
+                    .append(message)
+                    .toString();
         }
 
         PublishingStatusItem item = new PublishingStatusItem();
@@ -101,5 +77,21 @@ public class PublishingStatusDao {
         item.setBookId(bookId);
         dynamoDbMapper.save(item);
         return item;
+    }
+
+    public List<PublishingStatusItem> getPublishingStatus(String id) {
+        PublishingStatusItem item = new PublishingStatusItem();
+        item.setPublishingRecordId(id);
+
+        DynamoDBQueryExpression<PublishingStatusItem> expression = new DynamoDBQueryExpression<PublishingStatusItem>()
+                .withHashKeyValues(item);
+
+        PaginatedQueryList<PublishingStatusItem> list = dynamoDbMapper.query(PublishingStatusItem.class, expression);
+
+        if (list.size() == 0) {
+            throw new PublishingStatusNotFoundException("publishing status not found");
+        }
+
+        return list;
     }
 }
